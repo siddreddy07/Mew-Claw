@@ -2,7 +2,7 @@
 
 **Your computer, in your pocket. Chat naturally, control everything.**
 
-Mew is an AI-powered Telegram bot that turns your phone into a remote control for your PC. Browse files, run commands, lock your screen, shut down, search the web, or post tweets — just by typing a message. Powered by Groq AI, with inline approval for every destructive action.
+Mew is an AI-powered Telegram bot that turns your phone into a remote control for your PC. Browse files, run commands, lock your screen, shut down, search the web, or post tweets — just by typing a message. Built with the **Vercel AI SDK** and **Groq API**, with inline approval for every destructive action.
 
 ---
 
@@ -65,7 +65,6 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 | `PORT` | Yes | Server port (default: 7050) |
 | `GROQ_API_KEY` | Yes | AI routing & formatting — get at [console.groq.com](https://console.groq.com) |
 | `TELEGRAM_BOT_TOKEN` | Yes | From [@BotFather](https://t.me/BotFather) |
-| `DATABASE_URL` | Yes | PostgreSQL connection string (Neon, etc.) |
 | `LANGSEARCH_API_KEY` | For web search | Get at [docs.langsearch.com](https://docs.langsearch.com) |
 | `CLIENT_ID` / `CLIENT_SECRET` | For Twitter | Twitter OAuth 2.0 credentials |
 | `X_CALLBACK_URL` | For Twitter | Must match the callback URL in Twitter Dev Portal |
@@ -180,14 +179,13 @@ server/
 │   │   ├── webhook.Service.js
 │   │   ├── chat.Service.js
 │   │   └── Twitter.Service.js
-│   ├── tools/               # Tool implementations
-│   │   ├── readFile.js      # Fuzzy file search via fast-glob
-│   │   ├── editFile.js      # AI-powered edits
-│   │   ├── webSearch.js     # LangSearch API
-│   │   ├── terminalTool.js  # CLI execution (approval)
-│   │   ├── systemTool.js    # PC controls (approval)
-│   │   └── twitterTool.js   # Tweet posting (approval)
-│   └── schemas/             # DB schemas
+│   └── tools/               # Tool implementations
+│       ├── readFile.js      # Fuzzy file search via fast-glob
+│       ├── editFile.js      # AI-powered edits
+│       ├── webSearch.js     # LangSearch API
+│       ├── terminalTool.js  # CLI execution (approval)
+│       ├── systemTool.js    # PC controls (approval)
+│       └── twitterTool.js   # Tweet posting (approval)
 └── .env.example
 ```
 
