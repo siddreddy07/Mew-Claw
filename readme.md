@@ -1,8 +1,8 @@
-# Mew — Telegram Remote Assistant
+# Mew — AI Agent
 
-**Your computer, in your pocket. Chat naturally, control everything.**
+**Your personal AI agent, right inside Telegram.**
 
-Mew is an AI-powered Telegram bot that turns your phone into a remote control for your PC. Browse files, run commands, lock your screen, shut down, search the web, or post tweets — just by typing a message. Built with the **Vercel AI SDK** and **Groq API**, with inline approval for every destructive action.
+Mew is an AI agent that lives in your Telegram. It perceives your messages, decides which tool to use via LLM reasoning, and autonomously executes actions on your PC — read files, run commands, lock your screen, shut down, search the web, or post tweets. Built with the **Vercel AI SDK** and **Groq API**, with inline approval for every destructive action.
 
 ---
 
