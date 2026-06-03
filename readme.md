@@ -32,7 +32,7 @@ Every destructive action (terminal, system, twitter) requires you to tap **Appro
 ### Setup
 
 ```bash
-git clone <repo> && cd server
+git clone https://github.com/siddreddy07/Mew-Claw.git && cd Mew-Claw/server
 npm install
 cp .env.example .env   # fill in your keys
 npm run dev
