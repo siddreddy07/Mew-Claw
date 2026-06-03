@@ -207,3 +207,7 @@ To add a new tool:
 ## License
 
 ISC
+
+---
+
+Built by **Siddharth Reddy** · siddharthreddy627@gmail.com
