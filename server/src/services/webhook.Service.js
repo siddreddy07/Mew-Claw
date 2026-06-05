@@ -4,6 +4,7 @@ import { exec } from 'child_process';
 import { platform } from 'os';
 import { promisify } from 'util';
 import { postTweet } from './Twitter.Service.js';
+import { postToLinkedIn } from './LinkedIn.Service.js';
 
 const pendingCommands = new Map();
 const isWin = platform() === 'win32';
@@ -36,7 +37,7 @@ export async function handleWebhook(payload) {
     try {
       const { answer, result, toolName, needsApproval } = await processQuery(userQuery);
       if (needsApproval) {
-        const prefix = toolName === 'twitter' ? 'twitter' : 'terminal';
+        const prefix = toolName === 'twitter' ? 'twitter' : toolName === 'linkedin' ? 'linkedin' : 'terminal';
         const buttons = [[
           { text: 'Approve ✅', callback_data: `${prefix}_approve` },
           { text: 'Reject ❌', callback_data: `${prefix}_reject` },
@@ -147,6 +148,17 @@ async function handleCallbackQuery(callbackQuery) {
       await reply(chatId, `✅ <b>Tweet posted!</b>${link ? `\n\n${link}` : ''}`);
     } else {
       await reply(chatId, `❌ <b>Failed to post tweet</b>\n\n${result.message}`);
+    }
+
+    return { ok: true };
+  }
+
+  if (data === 'linkedin_approve') {
+    const result = await postToLinkedIn({ content: cmd.content, mediaPath: cmd.mediaPath });
+    if (result.success) {
+      await reply(chatId, `✅ <b>LinkedIn post published!</b>`);
+    } else {
+      await reply(chatId, `❌ <b>Failed to post to LinkedIn</b>\n\n${result.message}`);
     }
 
     return { ok: true };

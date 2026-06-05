@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { webhookHandler } from '../controllers/webhook.Controller.js';
 import { TwitterApi } from 'twitter-api-v2';
 import { oauthStore, tokenStore } from './twitter.js';
+import { linkedinTokenStore } from './linkedin.js';
+import axios from "axios";
 
 const router = Router();
 
@@ -47,5 +49,52 @@ router.get('/x/callback', async (req, res) => {
     res.status(500).send('❌ Authentication failed. Try again.');
   }
 });
+
+export const linkedinCallback = async (req, res) => {
+  const { code, state } = req.query;
+
+  if (!code) {
+    return res.status(400).json({ error: "Missing code" });
+  }
+
+  try {
+    // Exchange code → access token
+    const tokenRes = await axios.post(
+      "https://www.linkedin.com/oauth/v2/accessToken",
+      null,
+      {
+        params: {
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: process.env.LINKEDIN_CALLBACK_URL,
+          client_id: process.env.LINKEDIN_CLIENT_ID,
+          client_secret: process.env.LINKEDIN_CLIENT_SECRET,
+        },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    const { access_token, expires_in } = tokenRes.data;
+
+    linkedinTokenStore.set('tokens', { accessToken: access_token, expiresIn: expires_in });
+    console.log('LinkedIn OAuth tokens stored:', { accessToken: access_token, expiresIn: expires_in });
+
+    return res.json({
+      access_token,
+      expires_in,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: "Failed to fetch LinkedIn token",
+    });
+  }
+};
+
+router.get('/in/callback',linkedinCallback)
+
+
+
 
 export default router;

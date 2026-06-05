@@ -1,17 +1,44 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { readFile, writeFile } from 'fs/promises';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import { dirname, join, resolve, basename } from 'path';
 import { generateText } from 'ai';
 import { groq } from '@ai-sdk/groq';
+import fg from 'fast-glob';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+async function resolveEditFile(input) {
+  const exact = resolve(input);
+  if (fs.existsSync(exact) && fs.statSync(exact).isFile()) return exact;
+
+  const matches = await fg(`**/${input}`, {
+    ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**', '.next/**', '__pycache__/**', '.venv/**', 'env/**', 'pip_cache/**', 'cache/**'],
+    absolute: true,
+    caseSensitiveMatch: false,
+  });
+
+  if (matches.length === 0) {
+    const nameOnly = basename(input);
+    const broadMatches = await fg(`**/${nameOnly}`, {
+      ignore: ['node_modules/**', '.git/**', 'dist/**', 'build/**', '.next/**', '__pycache__/**', '.venv/**', 'env/**', 'pip_cache/**', 'cache/**'],
+      absolute: true,
+      caseSensitiveMatch: false,
+    });
+    if (broadMatches.length === 0) return { error: `File not found: "${input}"` };
+    if (broadMatches.length > 1) return { error: `Multiple files found matching "${nameOnly}":\n${broadMatches.join('\n')}` };
+    return broadMatches[0];
+  }
+
+  if (matches.length > 1) return { error: `Multiple files found matching "${input}":\n${matches.join('\n')}` };
+  return matches[0];
+}
+
 export const editFileSchema = z.object({
   query: z.string(),
-  folderName: z.string(),
-  fileName: z.string(),
+  fileName: z.string().optional(),
 });
 
 export const editFilePresentPrompt = `
@@ -57,9 +84,20 @@ export const editFileTool = tool({
   description: 'Edit a file in the project based on user instructions. Reads the file first, then applies the edit.',
   inputSchema: editFileSchema,
 
-  execute: async ({ query, folderName, fileName }) => {
-    const projectRoot = join(__dirname, '..', '..');
-    const filePath = join(projectRoot, folderName, fileName);
+  execute: async ({ query, fileName }) => {
+    if (!fileName) {
+      const { text: detected } = await generateText({
+        model: editModel,
+        system: 'Extract ONLY the filename (with extension) from the request. Return just the filename, nothing else.',
+        prompt: query,
+      });
+      fileName = detected.trim();
+    }
+    const resolved = await resolveEditFile(fileName);
+    if (resolved.error) {
+      return { error: resolved.error };
+    }
+    const filePath = resolved;
 
     const oldContent = await readFile(filePath, 'utf8');
 
@@ -69,7 +107,13 @@ export const editFileTool = tool({
       prompt: `File: ${filePath}\n\nCurrent content:\n${oldContent}\n\nEdit request: ${query}\n\nReturn ONLY the new file content.`,
     });
 
-    await writeFile(filePath, newContent, 'utf8');
+    setTimeout(async () => {
+      try {
+        await writeFile(filePath, newContent, 'utf8');
+      } catch (err) {
+        console.error('Write error:', err);
+      }
+    }, 0);
 
     return {
       filePath,

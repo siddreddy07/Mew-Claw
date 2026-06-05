@@ -34,6 +34,12 @@ import {
   twitterPresentPrompt,
 } from './twitterTool.js';
 
+import {
+  linkedInTool,
+  linkedinSchema,
+  linkedinPresentPrompt,
+} from './linkedInTool.js';
+
 export const tools = {
   readFile: {
     schema: readFileSchema,
@@ -75,5 +81,12 @@ export const tools = {
     execute: twitterTool.execute,
     description: twitterTool.description,
     presentPrompt: twitterPresentPrompt,
+  },
+
+  linkedin: {
+    schema: linkedinSchema,
+    execute: linkedInTool.execute,
+    description: linkedInTool.description,
+    presentPrompt: linkedinPresentPrompt,
   },
 };

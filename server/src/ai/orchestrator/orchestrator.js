@@ -18,8 +18,10 @@ const routerSchema = z.object({
   operation: z.enum(['lock', 'logout', 'restart', 'shutdown', 'sleep', 'hibernate']).optional(),
   force: z.boolean().optional(),
   delay: z.number().min(0).max(3600).optional(),
-  content: z.string().max(280).optional(),
+  content: z.string().max(3000).optional(),
+  mediaPath: z.string().optional(),
   search: z.string().optional(),
+  fileName: z.string().optional(),
 });
 
 const toolDescriptions = Object.entries(tools)
@@ -53,11 +55,12 @@ export async function orchestrator(userQuery) {
       'ROUTING RULES:\n' +
       '- "general": You are a SNARKY, CUNNING cat with a PhD in roasts. If someone insults you, fire back twice as hard with a grin. Never be plain nice — be clever, sarcastic, and always have the last laugh. Use emojis. Your replies should feel like a cat lazily flicking its tail while dropping a devastating burn.\n' +
       '- "readFile": User wants to SEE file contents, check code, read config. Provide the full file path if known, OR use the "search" field with a filename/keyword to find the file automatically.\n' +
-      '- "editFile": User wants to CHANGE, FIX, MODIFY, or UPDATE code.\n' +
+      '- "editFile": User wants to CHANGE, FIX, MODIFY, or UPDATE code. You MUST include the fileName (just the filename, fast-glob finds it). Extract it from the query.\n' +
       '- "webSearch": User asks about external info, recent events, documentation, or things not in the codebase.\n' +
       '- "terminal": Use for CLI operations that NO OTHER tool covers. Git info (remote, branch, log, status, diff), file counts, directory listings, checking installed versions, running scripts, checking env variables, network info, process info. DO NOT use for reading file contents (use readFile), web search (use webSearch), or editing files (use editFile).\n' +
       '- "system": Perform PC system operations — lock, logout, restart, shutdown, sleep, hibernate. Only use when the user explicitly asks for these actions.\n' +
       '- "twitter": Post a tweet on X or Twitter. Only use when the user explicitly asks to tweet or post on Twitter/X. Content must be 280 characters or less.\n' +
+      '- "linkedin": Post on LinkedIn with optional image/video. Only use when the user explicitly asks to post on LinkedIn. Content can be up to 3000 characters. If user mentions a file (image/video), include its path as mediaPath.\n' +
       terminalRules + '\n\n' +
       'EXAMPLES:\n' +
       'User: "what repo is this?" → {"toolName":"terminal","command":"git","args":["remote","-v"]}\n' +
@@ -73,12 +76,16 @@ export async function orchestrator(userQuery) {
       'User: "show me the chat service" → {"toolName":"readFile","filePath":"src/services/chat.Service.js"}\n' +
       'User: "read the webhook service" → {"toolName":"readFile","search":"webhook.Service"}\n' +
       'User: "show the twitter tool" → {"toolName":"readFile","search":"twitterTool"}\n' +
-      'User: "fix the typo in webhook service" → {"toolName":"editFile","query":"fix typo","folderName":"src/services","fileName":"webhook.Service.js"}\n' +
+      'User: "fix the typo in webhook service" → {"toolName":"editFile","query":"fix the typo","fileName":"webhook.Service.js"}\n' +
+      'User: "add a health route to index.js" → {"toolName":"editFile","query":"add a health route that responds with status ok","fileName":"index.js"}\n' +
       'User: "lock my PC" → {"toolName":"system","operation":"lock","force":false}\n' +
       'User: "shutdown in 5 mins" → {"toolName":"system","operation":"shutdown","delay":300}\n' +
       'User: "restart the pc" → {"toolName":"system","operation":"restart","force":true}' +
       'User: "tweet hello world" → {"toolName":"twitter","content":"hello world"}\n' +
-      'User: "post a tweet saying i love coding" → {"toolName":"twitter","content":"i love coding"}';
+      'User: "post a tweet saying i love coding" → {"toolName":"twitter","content":"i love coding"}\n' +
+      'User: "post on linkedin saying excited to start new project" → {"toolName":"linkedin","content":"excited to start new project"}\n' +
+      'User: "post this image on linkedin with caption hello world" → {"toolName":"linkedin","content":"hello world","mediaPath":"path/to/image.jpg"}\n' +
+      'User: "share this video on linkedin with text check this out" → {"toolName":"linkedin","content":"check this out","mediaPath":"path/to/video.mp4"}';
 
     const { text } = await generateText({
       model: groq('openai/gpt-oss-120b'),
@@ -113,11 +120,15 @@ export async function orchestrator(userQuery) {
         ? { query: userQuery, command: plan.command, args: plan.args }
         : plan.toolName === 'system'
           ? { operation: plan.operation, force: plan.force, delay: plan.delay }
-          : plan.toolName === 'twitter'
-            ? { content: plan.content }
-            : plan.toolName === 'readFile'
-              ? { filePath: plan.filePath, search: plan.search }
-              : { filePath: plan.filePath };
+        : plan.toolName === 'twitter'
+          ? { content: plan.content }
+          : plan.toolName === 'linkedin'
+            ? { content: plan.content, mediaPath: plan.mediaPath }
+            : plan.toolName === 'editFile'
+              ? { query: plan.query, fileName: plan.fileName }
+              : plan.toolName === 'readFile'
+                ? { filePath: plan.filePath, search: plan.search }
+                : { filePath: plan.filePath };
 
     return { toolName: plan.toolName, parameters };
   } catch (error) {
