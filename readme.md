@@ -4,6 +4,8 @@
 
 Mew is an AI agent that lives in your Telegram. It perceives your messages, decides which tool to use via LLM reasoning, and autonomously executes actions on your PC — read files, run commands, lock your screen, shut down, search the web, or post tweets. Built with the **Vercel AI SDK** and **Groq API**, with inline approval for every destructive action.
 
+[![Watch Demo](https://res.cloudinary.com/dtgf2auzt/video/upload/v1781678537/WhatsApp_Video_2026-06-15_at_6.42.07_PM_dkwruy.jpg)](https://res.cloudinary.com/dtgf2auzt/video/upload/v1781678537/WhatsApp_Video_2026-06-15_at_6.42.07_PM_dkwruy.mp4)
+
 ---
 
 ## Capabilities
